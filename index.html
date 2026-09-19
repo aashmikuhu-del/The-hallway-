@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: Arial;
+    overflow: hidden;
+}
+
+#game {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 150px);
+    background: #111;
+    overflow: hidden;
+}
+
+#player {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: white;
+    left: 20px;
+    top: 70%;
+}
+
+#key {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: yellow;
+    left: 65%;
+    top: 50%;
+}
+
+#exit {
+    position: absolute;
+    width: 80px;
+    height: 100px;
+    background: red;
+    left: 45%;
+    top: 20px;
+    border: 4px solid darkred;
+}
+
+#monster {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: black;
+    border: 2px solid white;
+    left: 80%;
+    top: 20%;
+    display: none;
+}
+
+.eye {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    background: white;
+    top: 10px;
+}
+
+#eye1 {
+    left: 8px;
+}
+
+#eye2 {
+    right: 8px;
+}
+
+#hud {
+    position: fixed;
+    top: 5px;
+    left: 5px;
+    z-index: 10;
+    font-size: 18px;
+}
+
+#message {
+    position: fixed;
+    top: 45%;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 28px;
+    display: none;
+    z-index: 20;
+}
+
+#controls {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 150px;
+    background: #222;
+    text-align: center;
+}
+
+button {
+    width: 75px;
+    height: 45px;
+    margin: 3px;
+    font-size: 16px;
+    background: #555;
+    color: white;
+    border: 2px solid white;
+}
+</style>
+</head>
+
+<body>
+
+<div id="hud">
+❤️ Health: <span id="health">3</span>
+<br>
+🔑 Key: <span id="keyStatus">NO</span>
+</div>
+
+<div id="game">
+
+    <div id="player"></div>
+
+    <div id="key"></div>
+
+    <div id="exit"></div>
+
+    <div id="monster">
+        <div class="eye" id="eye1"></div>
+        <div class="eye" id="eye2"></div>
+    </div>
+
+</div>
+
+<div id="message"></div>
+
+<div id="controls">
+
+    <button ontouchstart="up()">UP</button>
+    <br>
+
+    <button ontouchstart="left()">LEFT</button>
+
+    <button ontouchstart="down()">DOWN</button>
+
+    <button ontouchstart="right()">RIGHT</button>
+
+</div>
+
+<script>
+
+var player = document.getElementById("player");
+var key = document.getElementById("key");
+var exit = document.getElementById("exit");
+var monster = document.getElementById("monster");
+
+var healthText = document.getElementById("health");
+var keyText = document.getElementById("keyStatus");
+var message = document.getElementById("message");
+
+var x = 20;
+var y = 200;
+
+var health = 3;
+var hasKey = false;
+var gameOver = false;
+
+function touching(a, b) {
+
+    var A = a.getBoundingClientRect();
+    var B = b.getBoundingClientRect();
+
+    return !(
+        A.right < B.left ||
+        A.left > B.right ||
+        A.bottom < B.top ||
+        A.top > B.bottom
+    );
+}
+
+function update() {
+
+    if (gameOver) return;
+
+    var maxX = document.getElementById("game").clientWidth - player.offsetWidth;
+    var maxY = document.getElementById("game").clientHeight - player.offsetHeight;
+
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x > maxX) x = maxX;
+    if (y > maxY) y = maxY;
+
+    player.style.left = x + "px";
+    player.style.top = y + "px";
+
+    /* GET KEY */
+
+    if (!hasKey && touching(player, key)) {
+
+        hasKey = true;
+
+        key.style.display = "none";
+
+        keyText.innerHTML = "YES";
+
+        monster.style.display = "block";
+
+        message.innerHTML = "THE MONSTER WOKE UP...";
+        message.style.display = "block";
+
+        setTimeout(function() {
+            message.style.display = "none";
+        }, 1500);
+    }
+
+    /* REACH EXIT */
+
+    if (hasKey && touching(player, exit)) {
+
+        gameOver = true;
+
+        message.innerHTML = "🚪 YOU ESCAPED! 🎉<br><br>YOU WIN!";
+        message.style.display = "block";
+
+    }
+
+    /* MONSTER */
+
+    if (hasKey) {
+
+        var mx = monster.offsetLeft;
+        var my = monster.offsetTop;
+
+        if (mx < x) mx += 2;
+        if (mx > x) mx -= 2;
+
+        if (my < y) my += 2;
+        if (my > y) my -= 2;
+
+        monster.style.left = mx + "px";
+        monster.style.top = my + "px";
+
+        if (touching(player, monster)) {
+
+            health--;
+
+            healthText.innerHTML = health;
+
+            x = 20;
+            y = 200;
+
+            monster.style.left = "80%";
+            monster.style.top = "20%";
+
+            if (health <= 0) {
+
+                gameOver = true;
+
+                message.innerHTML = "💀 GAME OVER";
+                message.style.display = "block";
+            }
+        }
+    }
+}
+
+function up() {
+    y -= 25;
+    update();
+}
+
+function down() {
+    y += 25;
+    update();
+}
+
+function left() {
+    x -= 25;
+    update();
+}
+
+function right() {
+    x += 25;
+    update();
+}
+
+update();
+
+</script>
+
+</body>
+</html>
